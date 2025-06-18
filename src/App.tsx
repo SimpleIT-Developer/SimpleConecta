@@ -11,14 +11,20 @@ import Dashboard from "./pages/Dashboard";
 
 // Páginas da Prefeitura
 import Empresas from "./pages/prefeitura/Empresas";
+import Cidadaos from "./pages/prefeitura/Cidadaos";
 
 // Páginas da Empresa
 import Vagas from "./pages/empresa/Vagas";
+import ChatEmpresa from "./pages/empresa/Chat";
+import EntrevistasEmpresa from "./pages/empresa/Entrevistas";
+import Candidatos from "./pages/empresa/Candidatos";
 
 // Páginas do Cidadão
 import Curriculo from "./pages/cidadao/Curriculo";
 import VagasDisponiveis from "./pages/cidadao/VagasDisponiveis";
 import Candidaturas from "./pages/cidadao/Candidaturas";
+import ChatCidadao from "./pages/cidadao/Chat";
+import Entrevistas from "./pages/cidadao/Entrevistas";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +67,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/prefeitura/cidadaos"
+        element={
+          <ProtectedRoute allowedRoles={['prefeitura']}>
+            <Cidadaos />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Rotas da Empresa */}
       <Route
@@ -68,6 +82,30 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['empresa']}>
             <Vagas />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/empresa/candidatos"
+        element={
+          <ProtectedRoute allowedRoles={['empresa']}>
+            <Candidatos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/empresa/chat"
+        element={
+          <ProtectedRoute allowedRoles={['empresa']}>
+            <ChatEmpresa />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/empresa/entrevistas"
+        element={
+          <ProtectedRoute allowedRoles={['empresa']}>
+            <EntrevistasEmpresa />
           </ProtectedRoute>
         }
       />
@@ -94,6 +132,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['cidadao']}>
             <Candidaturas />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cidadao/chat"
+        element={
+          <ProtectedRoute allowedRoles={['cidadao']}>
+            <ChatCidadao />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cidadao/entrevistas"
+        element={
+          <ProtectedRoute allowedRoles={['cidadao']}>
+            <Entrevistas />
           </ProtectedRoute>
         }
       />
