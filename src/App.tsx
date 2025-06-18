@@ -11,7 +11,9 @@ import Dashboard from "./pages/Dashboard";
 
 // Páginas da Prefeitura
 import Empresas from "./pages/prefeitura/Empresas";
+import CadastrarEmpresa from "./pages/prefeitura/CadastrarEmpresa";
 import Cidadaos from "./pages/prefeitura/Cidadaos";
+import Relatorios from "./pages/prefeitura/Relatorios";
 
 // Páginas da Empresa
 import Vagas from "./pages/empresa/Vagas";
