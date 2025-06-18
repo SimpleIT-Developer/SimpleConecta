@@ -9,6 +9,17 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 
+// Páginas da Prefeitura
+import Empresas from "./pages/prefeitura/Empresas";
+
+// Páginas da Empresa
+import Vagas from "./pages/empresa/Vagas";
+
+// Páginas do Cidadão
+import Curriculo from "./pages/cidadao/Curriculo";
+import VagasDisponiveis from "./pages/cidadao/VagasDisponiveis";
+import Candidaturas from "./pages/cidadao/Candidaturas";
+
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -40,7 +51,53 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      {/* Rotas específicas por tipo de usuário serão implementadas nas próximas versões */}
+
+      {/* Rotas da Prefeitura */}
+      <Route
+        path="/prefeitura/empresas"
+        element={
+          <ProtectedRoute allowedRoles={['prefeitura']}>
+            <Empresas />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rotas da Empresa */}
+      <Route
+        path="/empresa/vagas"
+        element={
+          <ProtectedRoute allowedRoles={['empresa']}>
+            <Vagas />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rotas do Cidadão */}
+      <Route
+        path="/cidadao/curriculo"
+        element={
+          <ProtectedRoute allowedRoles={['cidadao']}>
+            <Curriculo />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cidadao/vagas"
+        element={
+          <ProtectedRoute allowedRoles={['cidadao']}>
+            <VagasDisponiveis />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cidadao/candidaturas"
+        element={
+          <ProtectedRoute allowedRoles={['cidadao']}>
+            <Candidaturas />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
