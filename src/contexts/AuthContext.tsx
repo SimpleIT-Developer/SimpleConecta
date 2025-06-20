@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -78,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('currentUser');
+    // Forçar redirecionamento para login
+    window.location.href = '/login';
   };
 
   return (
