@@ -20,6 +20,14 @@ const Login: React.FC = () => {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
 
+  const clearSignupForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setRole('');
+    setError('');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -57,6 +65,8 @@ const Login: React.FC = () => {
       } else {
         setError('');
         alert('Conta criada com sucesso! Verifique seu email para confirmar a conta.');
+        clearSignupForm();
+        setActiveTab('login');
       }
     } catch (err) {
       setError('Erro ao criar conta. Tente novamente.');
