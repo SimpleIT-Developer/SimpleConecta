@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
   Building2, 
@@ -14,81 +15,141 @@ import {
   UserCheck
 } from 'lucide-react';
 
+interface DashboardStats {
+  totalUsuarios: number;
+  totalEmpresas: number;
+  totalVagas: number;
+  totalCandidaturas: number;
+  entrevistasAgendadas: number;
+  vagasEfetivadas: number;
+}
+
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsuarios: 0,
+    totalEmpresas: 0,
+    totalVagas: 0,
+    totalCandidaturas: 0,
+    entrevistasAgendadas: 0,
+    vagasEfetivadas: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  // Mock data para demonstração
-  const dashboardData = {
-    admin: {
-      stats: [
-        { title: 'Total de Usuários', value: '1,234', icon: Users, color: 'text-blue-600' },
-        { title: 'Empresas Ativas', value: '89', icon: Building2, color: 'text-green-600' },
-        { title: 'Vagas Abertas', value: '156', icon: Briefcase, color: 'text-purple-600' },
-        { title: 'Entrevistas Hoje', value: '23', icon: Calendar, color: 'text-orange-600' },
-      ],
-      recentActivities: [
-        'Nova empresa cadastrada: Tech Solutions',
-        'Cidadão João Silva contratado',
-        'Vaga de desenvolvedor preenchida',
-        '15 novos cadastros de cidadãos hoje',
-      ]
-    },
-    prefeitura: {
-      stats: [
-        { title: 'Empresas Cadastradas', value: '89', icon: Building2, color: 'text-blue-600' },
-        { title: 'Cidadãos Ativos', value: '567', icon: Users, color: 'text-green-600' },
-        { title: 'Vagas Efetivadas', value: '45', icon: CheckCircle, color: 'text-purple-600' },
-        { title: 'Entrevistas Realizadas', value: '234', icon: Calendar, color: 'text-orange-600' },
-      ],
-      recentActivities: [
-        'Empresa TechCorp aprovada para cadastro',
-        'Relatório mensal de colocações gerado',
-        'Meta de empregos deste mês: 80% atingida',
-        'Workshop de capacitação agendado',
-      ]
-    },
-    empresa: {
-      stats: [
-        { title: 'Vagas Abertas', value: '12', icon: Briefcase, color: 'text-blue-600' },
-        { title: 'Candidatos Ativos', value: '156', icon: Users, color: 'text-green-600' },
-        { title: 'Entrevistas Agendadas', value: '8', icon: Calendar, color: 'text-purple-600' },
-        { title: 'Contratações Este Mês', value: '3', icon: UserCheck, color: 'text-orange-600' },
-      ],
-      recentActivities: [
-        'Nova candidatura para vaga de Designer',
-        'Entrevista com Maria Santos agendada',
-        'Vaga de analista preenchida',
-        '5 novos candidatos qualificados',
-      ]
-    },
-    cidadao: {
-      stats: [
-        { title: 'Candidaturas Enviadas', value: '8', icon: Briefcase, color: 'text-blue-600' },
-        { title: 'Entrevistas Agendadas', value: '2', icon: Calendar, color: 'text-green-600' },
-        { title: 'Empresas Interessadas', value: '5', icon: Building2, color: 'text-purple-600' },
-        { title: 'Perfil Visualizado', value: '34', icon: TrendingUp, color: 'text-orange-600' },
-      ],
-      recentActivities: [
-        'Nova vaga compatível encontrada',
-        'Empresa TechSolutions visualizou seu perfil',
-        'Entrevista com DevCorp confirmada',
-        'Currículo atualizado com sucesso',
-      ]
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const statsPromises = [];
+
+        if (user?.role === 'admin' || user?.role === 'prefeitura') {
+          // Stats para admin e prefeitura
+          statsPromises.push(
+            supabase.from('profiles').select('id', { count: 'exact', head: true }),
+            supabase.from('empresas').select('id', { count: 'exact', head: true }),
+            supabase.from('vagas').select('id', { count: 'exact', head: true }),
+            supabase.from('candidaturas').select('id', { count: 'exact', head: true }),
+            supabase.from('entrevistas').select('id', { count: 'exact', head: true }).eq('status', 'agendada'),
+            supabase.from('candidaturas').select('id', { count: 'exact', head: true }).eq('status', 'hired')
+          );
+        } else if (user?.role === 'empresa') {
+          // Stats para empresa
+          statsPromises.push(
+            supabase.from('vagas').select('id', { count: 'exact', head: true }).eq('empresa_id', user.id),
+            supabase.from('candidaturas').select('id', { count: 'exact', head: true }).in('vaga_id', 
+              supabase.from('vagas').select('id').eq('empresa_id', user.id)
+            ),
+            supabase.from('entrevistas').select('id', { count: 'exact', head: true }).eq('status', 'agendada')
+          );
+        } else if (user?.role === 'cidadao') {
+          // Stats para cidadão
+          statsPromises.push(
+            supabase.from('candidaturas').select('id', { count: 'exact', head: true }).eq('cidadao_id', user.id),
+            supabase.from('entrevistas').select('id', { count: 'exact', head: true }).eq('status', 'agendada')
+          );
+        }
+
+        const results = await Promise.all(statsPromises);
+        
+        if (user?.role === 'admin' || user?.role === 'prefeitura') {
+          setStats({
+            totalUsuarios: results[0]?.count || 0,
+            totalEmpresas: results[1]?.count || 0,
+            totalVagas: results[2]?.count || 0,
+            totalCandidaturas: results[3]?.count || 0,
+            entrevistasAgendadas: results[4]?.count || 0,
+            vagasEfetivadas: results[5]?.count || 0
+          });
+        } else if (user?.role === 'empresa') {
+          setStats({
+            totalUsuarios: 0,
+            totalEmpresas: 0,
+            totalVagas: results[0]?.count || 0,
+            totalCandidaturas: results[1]?.count || 0,
+            entrevistasAgendadas: results[2]?.count || 0,
+            vagasEfetivadas: 0
+          });
+        } else if (user?.role === 'cidadao') {
+          setStats({
+            totalUsuarios: 0,
+            totalEmpresas: 0,
+            totalVagas: 0,
+            totalCandidaturas: results[0]?.count || 0,
+            entrevistasAgendadas: results[1]?.count || 0,
+            vagasEfetivadas: 0
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar estatísticas:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  const getStatsForRole = () => {
+    switch (user?.role) {
+      case 'admin':
+      case 'prefeitura':
+        return [
+          { title: 'Total de Usuários', value: stats.totalUsuarios.toString(), icon: Users, color: 'text-blue-600' },
+          { title: 'Empresas Cadastradas', value: stats.totalEmpresas.toString(), icon: Building2, color: 'text-green-600' },
+          { title: 'Vagas Abertas', value: stats.totalVagas.toString(), icon: Briefcase, color: 'text-purple-600' },
+          { title: 'Entrevistas Agendadas', value: stats.entrevistasAgendadas.toString(), icon: Calendar, color: 'text-orange-600' },
+        ];
+      case 'empresa':
+        return [
+          { title: 'Minhas Vagas', value: stats.totalVagas.toString(), icon: Briefcase, color: 'text-blue-600' },
+          { title: 'Candidaturas Recebidas', value: stats.totalCandidaturas.toString(), icon: Users, color: 'text-green-600' },
+          { title: 'Entrevistas Agendadas', value: stats.entrevistasAgendadas.toString(), icon: Calendar, color: 'text-purple-600' },
+          { title: 'Contratações', value: '0', icon: UserCheck, color: 'text-orange-600' },
+        ];
+      case 'cidadao':
+        return [
+          { title: 'Candidaturas Enviadas', value: stats.totalCandidaturas.toString(), icon: Briefcase, color: 'text-blue-600' },
+          { title: 'Entrevistas Agendadas', value: stats.entrevistasAgendadas.toString(), icon: Calendar, color: 'text-green-600' },
+          { title: 'Empresas Interessadas', value: '0', icon: Building2, color: 'text-purple-600' },
+          { title: 'Perfil Visualizado', value: '0', icon: TrendingUp, color: 'text-orange-600' },
+        ];
+      default:
+        return [];
     }
   };
 
-  const currentData = dashboardData[user?.role as keyof typeof dashboardData];
-
-  if (!currentData) {
+  if (loading) {
     return (
       <MainLayout>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard não disponível</h1>
-          <p className="text-gray-600">Tipo de usuário não reconhecido.</p>
+        <div className="flex items-center justify-center min-h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </MainLayout>
     );
   }
+
+  const currentStats = getStatsForRole();
 
   return (
     <MainLayout>
@@ -104,7 +165,7 @@ const Dashboard: React.FC = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {currentData.stats.map((stat, index) => (
+          {currentStats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow duration-200">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -135,12 +196,18 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {currentData.recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm text-gray-700">{activity}</p>
-                  </div>
-                ))}
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-sm text-gray-700">Sistema conectado ao banco de dados</p>
+                </div>
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                  <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-sm text-gray-700">Autenticação configurada</p>
+                </div>
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0"></div>
+                  <p className="text-sm text-gray-700">Políticas de segurança ativadas</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -184,7 +251,7 @@ const Dashboard: React.FC = () => {
                   </>
                 )}
 
-                {user?.role === 'prefeitura' && (
+                {(user?.role === 'prefeitura' || user?.role === 'admin') && (
                   <>
                     <button className="w-full text-left p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
                       <div className="font-medium text-blue-900">Cadastrar Empresa</div>

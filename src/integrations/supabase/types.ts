@@ -9,7 +9,314 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      candidaturas: {
+        Row: {
+          applied_at: string | null
+          cidadao_approved: boolean | null
+          cidadao_id: string
+          empresa_approved: boolean | null
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          status: Database["public"]["Enums"]["candidatura_status"] | null
+          vaga_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          cidadao_approved?: boolean | null
+          cidadao_id: string
+          empresa_approved?: boolean | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["candidatura_status"] | null
+          vaga_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          cidadao_approved?: boolean | null
+          cidadao_id?: string
+          empresa_approved?: boolean | null
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          status?: Database["public"]["Enums"]["candidatura_status"] | null
+          vaga_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidaturas_cidadao_id_fkey"
+            columns: ["cidadao_id"]
+            isOneToOne: false
+            referencedRelation: "cidadaos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidaturas_vaga_id_fkey"
+            columns: ["vaga_id"]
+            isOneToOne: false
+            referencedRelation: "vagas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          candidatura_id: string
+          id: string
+          message: string
+          message_type: Database["public"]["Enums"]["message_type"] | null
+          sender_id: string
+          sender_type: Database["public"]["Enums"]["sender_type"]
+          sent_at: string | null
+        }
+        Insert: {
+          candidatura_id: string
+          id?: string
+          message: string
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          sender_id: string
+          sender_type: Database["public"]["Enums"]["sender_type"]
+          sent_at?: string | null
+        }
+        Update: {
+          candidatura_id?: string
+          id?: string
+          message?: string
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          sender_id?: string
+          sender_type?: Database["public"]["Enums"]["sender_type"]
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_candidatura_id_fkey"
+            columns: ["candidatura_id"]
+            isOneToOne: false
+            referencedRelation: "candidaturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cidadaos: {
+        Row: {
+          curriculum_validity: string | null
+          education: string | null
+          experience: string | null
+          id: string
+          skills: string[] | null
+          status: Database["public"]["Enums"]["status_type"] | null
+        }
+        Insert: {
+          curriculum_validity?: string | null
+          education?: string | null
+          experience?: string | null
+          id: string
+          skills?: string[] | null
+          status?: Database["public"]["Enums"]["status_type"] | null
+        }
+        Update: {
+          curriculum_validity?: string | null
+          education?: string | null
+          experience?: string | null
+          id?: string
+          skills?: string[] | null
+          status?: Database["public"]["Enums"]["status_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cidadaos_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empresas: {
+        Row: {
+          approved_by_prefeitura: boolean | null
+          company_description: string | null
+          company_name: string
+          id: string
+          industry: string | null
+          size: string | null
+        }
+        Insert: {
+          approved_by_prefeitura?: boolean | null
+          company_description?: string | null
+          company_name: string
+          id: string
+          industry?: string | null
+          size?: string | null
+        }
+        Update: {
+          approved_by_prefeitura?: boolean | null
+          company_description?: string | null
+          company_name?: string
+          id?: string
+          industry?: string | null
+          size?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresas_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entrevistas: {
+        Row: {
+          avaliacao: string | null
+          candidatura_id: string
+          created_at: string | null
+          data_entrevista: string
+          endereco: string | null
+          id: string
+          link_reuniao: string | null
+          observacoes: string | null
+          status: string | null
+          tipo: string
+        }
+        Insert: {
+          avaliacao?: string | null
+          candidatura_id: string
+          created_at?: string | null
+          data_entrevista: string
+          endereco?: string | null
+          id?: string
+          link_reuniao?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo: string
+        }
+        Update: {
+          avaliacao?: string | null
+          candidatura_id?: string
+          created_at?: string | null
+          data_entrevista?: string
+          endereco?: string | null
+          id?: string
+          link_reuniao?: string | null
+          observacoes?: string | null
+          status?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entrevistas_candidatura_id_fkey"
+            columns: ["candidatura_id"]
+            isOneToOne: false
+            referencedRelation: "candidaturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          cnpj: string | null
+          cpf: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          phone?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          cnpj?: string | null
+          cpf?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      vagas: {
+        Row: {
+          benefits: string | null
+          contract_type: Database["public"]["Enums"]["contract_type"]
+          created_at: string | null
+          description: string
+          empresa_id: string
+          id: string
+          location: string | null
+          requirements: string[] | null
+          salary_range: string | null
+          status: Database["public"]["Enums"]["status_type"] | null
+          title: string
+          work_type: Database["public"]["Enums"]["work_type"]
+        }
+        Insert: {
+          benefits?: string | null
+          contract_type: Database["public"]["Enums"]["contract_type"]
+          created_at?: string | null
+          description: string
+          empresa_id: string
+          id?: string
+          location?: string | null
+          requirements?: string[] | null
+          salary_range?: string | null
+          status?: Database["public"]["Enums"]["status_type"] | null
+          title: string
+          work_type: Database["public"]["Enums"]["work_type"]
+        }
+        Update: {
+          benefits?: string | null
+          contract_type?: Database["public"]["Enums"]["contract_type"]
+          created_at?: string | null
+          description?: string
+          empresa_id?: string
+          id?: string
+          location?: string | null
+          requirements?: string[] | null
+          salary_range?: string | null
+          status?: Database["public"]["Enums"]["status_type"] | null
+          title?: string
+          work_type?: Database["public"]["Enums"]["work_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vagas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +325,19 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      candidatura_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "interview_scheduled"
+        | "hired"
+        | "eliminated"
+      contract_type: "clt" | "pj" | "estagio" | "temporario"
+      message_type: "text" | "interview_request" | "system"
+      sender_type: "cidadao" | "empresa"
+      status_type: "active" | "inactive" | "pending" | "approved" | "rejected"
+      user_role: "admin" | "prefeitura" | "cidadao" | "empresa"
+      work_type: "presencial" | "remoto" | "hibrido"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +452,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      candidatura_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "interview_scheduled",
+        "hired",
+        "eliminated",
+      ],
+      contract_type: ["clt", "pj", "estagio", "temporario"],
+      message_type: ["text", "interview_request", "system"],
+      sender_type: ["cidadao", "empresa"],
+      status_type: ["active", "inactive", "pending", "approved", "rejected"],
+      user_role: ["admin", "prefeitura", "cidadao", "empresa"],
+      work_type: ["presencial", "remoto", "hibrido"],
+    },
   },
 } as const

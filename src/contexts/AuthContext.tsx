@@ -1,90 +1,136 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Profile {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'prefeitura' | 'cidadao' | 'empresa';
+  cpf?: string;
+  cnpj?: string;
+  phone?: string;
+  birth_date?: string;
+  address?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  user: Profile | null;
+  session: Session | null;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
+  signup: (email: string, password: string, userData: { name: string; role: string }) => Promise<{ error?: string }>;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users para demonstração
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'admin',
-    name: 'Administrador Sistema',
-    role: 'admin',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    email: 'pref',
-    name: 'Prefeitura Municipal',
-    role: 'prefeitura',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    email: 'cidad',
-    name: 'João Silva',
-    role: 'cidadao',
-    cpf: '123.456.789-00',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    email: 'emp',
-    name: 'Tech Solutions Ltda',
-    role: 'empresa',
-    cnpj: '12.345.678/0001-90',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar se há usuário logado no localStorage
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event, session);
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile && !error) {
+            setUser(profile);
+          } else {
+            console.error('Error fetching profile:', error);
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session);
+      if (session) {
+        setSession(session);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulação de login com usuários mock
-    const foundUser = mockUsers.find(u => u.email === email);
-    
-    if (foundUser && password === email) { // Password igual ao email para demonstração
-      setUser(foundUser);
-      localStorage.setItem('currentUser', JSON.stringify(foundUser));
-      return true;
+  const login = async (email: string, password: string): Promise<{ error?: string }> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (err) {
+      console.error('Login error:', err);
+      return { error: 'Erro ao fazer login. Tente novamente.' };
     }
-    
-    return false;
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
-    // Forçar redirecionamento para login
-    window.location.href = '/login';
+  const signup = async (email: string, password: string, userData: { name: string; role: string }): Promise<{ error?: string }> => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: userData.name,
+            role: userData.role,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (error) {
+        return { error: error.message };
+      }
+
+      return {};
+    } catch (err) {
+      console.error('Signup error:', err);
+      return { error: 'Erro ao criar conta. Tente novamente.' };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, session, login, logout, signup, loading }}>
       {children}
     </AuthContext.Provider>
   );
