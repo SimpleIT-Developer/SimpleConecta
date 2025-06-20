@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -52,12 +51,19 @@ const Dashboard: React.FC = () => {
             supabase.from('candidaturas').select('id', { count: 'exact', head: true }).eq('status', 'hired')
           );
         } else if (user?.role === 'empresa') {
-          // Stats para empresa
+          // Stats para empresa - corrigir a consulta aninhada
+          const { data: empresaVagas } = await supabase
+            .from('vagas')
+            .select('id')
+            .eq('empresa_id', user.id);
+          
+          const vagaIds = empresaVagas?.map(v => v.id) || [];
+          
           statsPromises.push(
             supabase.from('vagas').select('id', { count: 'exact', head: true }).eq('empresa_id', user.id),
-            supabase.from('candidaturas').select('id', { count: 'exact', head: true }).in('vaga_id', 
-              supabase.from('vagas').select('id').eq('empresa_id', user.id)
-            ),
+            vagaIds.length > 0 
+              ? supabase.from('candidaturas').select('id', { count: 'exact', head: true }).in('vaga_id', vagaIds)
+              : Promise.resolve({ count: 0 }),
             supabase.from('entrevistas').select('id', { count: 'exact', head: true }).eq('status', 'agendada')
           );
         } else if (user?.role === 'cidadao') {

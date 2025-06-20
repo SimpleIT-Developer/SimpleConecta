@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,7 +115,7 @@ const Candidaturas: React.FC = () => {
         work_type: 'remoto',
         contract_type: 'clt',
         location: 'São Paulo/SP',
-        status: 'paused',
+        status: 'inactive', // Mudado de 'paused' para 'inactive'
         created_at: '2024-01-05T08:00:00Z',
       },
       empresa_name: 'Tech Solutions Ltda'

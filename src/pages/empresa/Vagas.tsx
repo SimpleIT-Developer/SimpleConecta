@@ -51,7 +51,7 @@ const Vagas: React.FC = () => {
       work_type: 'remoto',
       contract_type: 'clt',
       location: 'São Paulo/SP',
-      status: 'paused',
+      status: 'inactive', // Mudado de 'paused' para 'inactive'
       created_at: new Date().toISOString(),
       candidates_count: 5,
     },
@@ -60,8 +60,8 @@ const Vagas: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'default';
-      case 'paused': return 'secondary';
-      case 'closed': return 'destructive';
+      case 'inactive': return 'secondary'; // Mudado de 'paused' para 'inactive'
+      case 'rejected': return 'destructive';
       default: return 'default';
     }
   };
@@ -69,8 +69,8 @@ const Vagas: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'active': return 'Ativa';
-      case 'paused': return 'Pausada';
-      case 'closed': return 'Fechada';
+      case 'inactive': return 'Inativa'; // Mudado de 'paused' para 'inactive'
+      case 'rejected': return 'Fechada';
       default: return status;
     }
   };

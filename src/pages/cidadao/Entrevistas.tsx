@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +36,21 @@ const Entrevistas: React.FC = () => {
       if (!user) return;
 
       try {
+        // Primeiro buscar as candidaturas do usuário
+        const { data: candidaturas } = await supabase
+          .from('candidaturas')
+          .select('id')
+          .eq('cidadao_id', user.id);
+
+        const candidaturaIds = candidaturas?.map(c => c.id) || [];
+
+        if (candidaturaIds.length === 0) {
+          setEntrevistas([]);
+          setLoading(false);
+          return;
+        }
+
+        // Depois buscar as entrevistas relacionadas
         const { data, error } = await supabase
           .from('entrevistas')
           .select(`
@@ -50,12 +64,7 @@ const Entrevistas: React.FC = () => {
               )
             )
           `)
-          .in('candidatura_id', 
-            supabase
-              .from('candidaturas')
-              .select('id')
-              .eq('cidadao_id', user.id)
-          )
+          .in('candidatura_id', candidaturaIds)
           .order('data_entrevista', { ascending: true });
 
         if (error) {
