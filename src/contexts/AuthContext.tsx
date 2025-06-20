@@ -41,17 +41,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         
         if (session?.user) {
-          // Fetch user profile
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile && !error) {
-            setUser(profile);
-          } else {
-            console.error('Error fetching profile:', error);
+          // Fetch user profile with retry logic
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (profile && !error) {
+              setUser(profile);
+            } else if (error) {
+              console.error('Error fetching profile:', error);
+              // If profile doesn't exist, try to create it
+              if (error.code === 'PGRST116') {
+                console.log('Profile not found, it should be created by trigger...');
+                // Wait a bit and try again
+                setTimeout(async () => {
+                  const { data: retryProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                  
+                  if (retryProfile) {
+                    setUser(retryProfile);
+                  }
+                }, 1000);
+              }
+              setUser(null);
+            }
+          } catch (profileError) {
+            console.error('Error in profile fetch:', profileError);
             setUser(null);
           }
         } else {
