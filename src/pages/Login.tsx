@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const { login, signup } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const clearSignupForm = () => {
     setName('');
@@ -28,20 +30,43 @@ const Login: React.FC = () => {
     setError('');
   };
 
+  const clearLoginForm = () => {
+    setEmail('');
+    setPassword('');
+    setError('');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      console.log('Iniciando processo de login...');
       const result = await login(email, password);
       if (result.error) {
         setError(result.error);
+        toast({
+          variant: "destructive",
+          title: "Erro no login",
+          description: result.error,
+        });
       } else {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Redirecionando para o dashboard...",
+        });
+        clearLoginForm();
         navigate('/dashboard');
       }
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      const errorMsg = 'Erro ao fazer login. Tente novamente.';
+      setError(errorMsg);
+      toast({
+        variant: "destructive",
+        title: "Erro no login",
+        description: errorMsg,
+      });
     } finally {
       setLoading(false);
     }
@@ -59,17 +84,32 @@ const Login: React.FC = () => {
     }
 
     try {
+      console.log('Iniciando processo de cadastro...');
       const result = await signup(email, password, { name, role });
       if (result.error) {
         setError(result.error);
+        toast({
+          variant: "destructive",
+          title: "Erro no cadastro",
+          description: result.error,
+        });
       } else {
         setError('');
-        alert('Conta criada com sucesso! Verifique seu email para confirmar a conta.');
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Você pode fazer login agora.",
+        });
         clearSignupForm();
         setActiveTab('login');
       }
     } catch (err) {
-      setError('Erro ao criar conta. Tente novamente.');
+      const errorMsg = 'Erro ao criar conta. Tente novamente.';
+      setError(errorMsg);
+      toast({
+        variant: "destructive",
+        title: "Erro no cadastro",
+        description: errorMsg,
+      });
     } finally {
       setLoading(false);
     }
